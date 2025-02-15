@@ -1,18 +1,10 @@
 import React from 'react';
-import { ReactGrid, TextCell } from '@silevis/reactgrid';
+import { ReactGrid } from '@silevis/reactgrid';
 
 interface TimeSlot {
   hour: number;
   minute: number;
 }
-
-const TIME_SLOTS= Array.from({ length: 24 * 4 }, (_, i) => {
-  const hour = Math.floor(i / 4);
-  const minute = (i % 4) * 15;
-  return { hour, minute };
-});
-
-
 
 type Task = {
   id: number;
@@ -20,6 +12,12 @@ type Task = {
   start: TimeSlot;
   end: TimeSlot;
 };
+
+const TIME_SLOTS = Array.from({ length: 24 * 4 }, (_, i) => {
+  const hour = Math.floor(i / 4);
+  const minute = (i % 4) * 15;
+  return { hour, minute };
+});
 
 const TEST_DATA: Task[] = [
   { id: 1, title: 'タスク1', start: { hour: 9, minute: 15 }, end: { hour: 12, minute: 30 } },
@@ -35,56 +33,58 @@ const TEST_DATA: Task[] = [
 ];
 
 export const ReactGridExample: React.FC = () => {
-  const cells = [
-    // Header row with hours
-    { 
-      rowIndex: 0, 
-      colIndex: 0,
-      Template: TextCell,
-      props: { value: '' }
+  const rows = [
+    {
+      rowId: 'header',
+      height: 40,
+      cells: [
+        { type: 'text', text: '', style: { background: '#fafafa' } },
+        ...TIME_SLOTS.map((slot) => ({
+          type: 'text',
+          text: `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`,
+          style: { background: '#fafafa', fontWeight: 'bold', textAlign: 'center', padding: '8px' }
+        }))
+      ]
     },
-    ...TIME_SLOTS.map((slot, index) => ({
-      rowIndex: 0,
-      colIndex: index + 1,
-      Template: TextCell,
-      props: { 
-        value: `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`,
-        style: { background: '#fafafa', fontWeight: 'bold', textAlign: 'center' }
-      }
-    })),
-    // Data rows with time spans
-    ...TEST_DATA.flatMap((record, index) => [
-      {
-        rowIndex: index + 1,
-        colIndex: 0,
-        Template: TextCell,
-        props: { 
-          value: record.title,
-          style: { background: '#fafafa' }
-        }
-      }
-    ])
+    ...TEST_DATA.map((record, index) => ({
+      rowId: `row-${index}`,
+      height: 40,
+      cells: [
+        {
+          type: 'text',
+          text: record.title,
+          style: { background: '#fafafa', padding: '8px' }
+        },
+        ...Array(TIME_SLOTS.length).fill({ type: 'text', text: '', style: { padding: '8px' } })
+      ]
+    }))
+
   ];
 
-  const styledRanges = TEST_DATA.map((record, index) => ({
-    range: {
-      start: { rowIndex: index + 1, columnIndex: (record.start.hour * 4 + Math.floor(record.start.minute / 15)) + 1 },
-      end: { rowIndex: index + 1, columnIndex: (record.end.hour * 4 + Math.floor(record.end.minute / 15)) + 1 }
-    },
-    styles: { 
-      background: '#e6f4ff',
+  const highlights = TEST_DATA.flatMap((record, index) => {
+    const startCol = (record.start.hour * 4 + Math.floor(record.start.minute / 15)) + 1;
+    const endCol = (record.end.hour * 4 + Math.floor(record.end.minute / 15)) + 1;
+    return Array.from({ length: endCol - startCol + 1 }, (_, i) => ({
+      rowId: `row-${index}`,
+      columnId: startCol + i,
+      backgroundColor: '#e6f4ff',
       color: '#1677ff',
-      borderLeft: '2px solid #1677ff',
-      borderRight: '2px solid #1677ff'
-    }
-  }));
+      borderLeft: i === 0 ? '2px solid #1677ff' : undefined,
+      borderRight: i === endCol - startCol ? '2px solid #1677ff' : undefined
+    }));
+  });
 
   return (
     <div className="h-[600px]">
       <ReactGrid 
-        rows={Array(TEST_DATA.length + 1).fill({ height: 40 })}
-        cells={cells}
-        styledRanges={styledRanges}
+        rows={rows}
+        columns={[
+          { columnId: 'title', width: 120 },
+          ...Array(TIME_SLOTS.length).fill({ width: 80 })
+        ]}
+        highlights={highlights}
+        stickyTopRows={1}
+        stickyLeftColumns={1}
       />
     </div>
   );
