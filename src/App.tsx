@@ -1,5 +1,6 @@
 import { AntdExample } from './components/AntdExample';
 import { DndKitExample } from './components/DndKitExample';
+import { ReactGridExample } from './components/ReactGridExample';
 
 function App() {
   return (
@@ -11,6 +12,10 @@ function App() {
       <div>
         <h1 className="text-2xl mb-4">DnD Kit Example</h1>
         <DndKitExample />
+      </div>
+      <div>
+        <h1 className="text-2xl mb-4">ReactGrid Example</h1>
+        <ReactGridExample />
       </div>
     </div>
   );
