@@ -62,9 +62,16 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
       };
 
   return (
-    <div style={{ position: "relative", height: "100%", width: "2400px", overflow: "hidden" }}>
+    <div
+      style={{
+        position: "relative",
+        height: "100%",
+        width: "2400px",
+        overflow: "hidden",
+      }}
+    >
       <TimelineBackground />
-      <div ref={setNodeRef} {...listeners} {...attributes} style={{ ...style, zIndex: 1 }}>
+      <div ref={setNodeRef} {...listeners} {...attributes} style={{ ...style }}>
         {`${task.title} (${startHour}:${startMinute.toString().padStart(2, "0")} - ${endHour}:${endMinute.toString().padStart(2, "0")})`}
       </div>
     </div>

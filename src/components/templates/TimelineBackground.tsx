@@ -4,9 +4,18 @@ interface TimelineBackgroundProps {
   width?: number;
 }
 
-export const TimelineBackground: React.FC<TimelineBackgroundProps> = ({ width = 2400 }) => {
+export const TimelineBackground: React.FC<TimelineBackgroundProps> = ({
+  width = 2400,
+}) => {
   return (
-    <div style={{ position: "absolute", height: "100%", width: `${width}px`, pointerEvents: "none" }}>
+    <div
+      style={{
+        position: "absolute",
+        height: "100%",
+        width: `${width}px`,
+        pointerEvents: "none",
+      }}
+    >
       {Array.from({ length: 96 }, (_, i) => {
         const minutes = i * 15;
         const hour = Math.floor(minutes / 60);
@@ -23,14 +32,14 @@ export const TimelineBackground: React.FC<TimelineBackgroundProps> = ({ width = 
               left: `${(minutes / 60) * 100}px`,
               width: "25px",
               height: "100%",
-              borderRight: isHourMark
+              borderLeft: isHourMark
                 ? "2px solid #d9d9d9"
                 : isHalfHourMark
-                ? "1px solid #e8e8e8"
-                : isQuarterMark
-                ? "1px dashed #f0f0f0"
-                : "none",
-              backgroundColor: hour % 2 === 0 ? "#fafafa" : "#f5f5f5",
+                  ? "1px solid #e8e8e8"
+                  : isQuarterMark
+                    ? "1px dashed #f0f0f0"
+                    : "none",
+              backgroundColor: "white",
               zIndex: 0,
             }}
           />

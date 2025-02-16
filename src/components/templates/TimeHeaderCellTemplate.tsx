@@ -9,7 +9,7 @@ export const TimeHeaderCellTemplate: CellTemplate<TimeHeaderCell> = {
       text: "",
       value: 0,
       nonEditable: true,
-      style: { background: "#fafafa" },
+      style: { background: "#fafafa", paddingLeft: "0" },
     };
   },
 
@@ -32,13 +32,13 @@ export const TimeHeaderCellTemplate: CellTemplate<TimeHeaderCell> = {
                 left: `${(minutes / 60) * 100}px`,
                 width: "25px",
                 height: "100%",
-                borderRight: isHourMark
+                borderLeft: isHourMark
                   ? "2px solid #d9d9d9"
                   : isHalfHourMark
-                  ? "1px solid #e8e8e8"
-                  : isQuarterMark
-                  ? "1px dashed #f0f0f0"
-                  : "none",
+                    ? "1px solid #e8e8e8"
+                    : isQuarterMark
+                      ? "1px dashed #f0f0f0"
+                      : "none",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
@@ -67,5 +67,5 @@ export const TimeHeaderCellTemplate: CellTemplate<TimeHeaderCell> = {
         })}
       </div>
     );
-  }
+  },
 };
