@@ -9,14 +9,13 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({ ce
     id: task.id.toString()
   });
 
-  const startHour = task.start.hour;
-  const endHour = task.end.hour;
-  const startMinutes = task.start.minute;
-  const endMinutes = task.end.minute;
+  const startHour = Math.floor(task.startMinutes / 60);
+  const startMinute = task.startMinutes % 60;
+  const endHour = Math.floor(task.endMinutes / 60);
+  const endMinute = task.endMinutes % 60;
 
-  const startPosition = (startHour + startMinutes / 60) * 100;
-  const width =
-    (endHour + endMinutes / 60 - (startHour + startMinutes / 60)) * 100;
+  const startPosition = (task.startMinutes / 60) * 100;
+  const width = ((task.endMinutes - task.startMinutes) / 60) * 100;
 
   const style: React.CSSProperties = transform ? {
     transform: `translate3d(${transform.x}px,0px,0)`,
@@ -67,7 +66,7 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({ ce
         {...attributes}
         style={style}
       >
-        {`${task.title} (${Math.floor(startHour)}:${startMinutes.toString().padStart(2, "0")} - ${Math.floor(endHour)}:${endMinutes.toString().padStart(2, "0")})`}
+        {`${task.title} (${startHour}:${startMinute.toString().padStart(2, "0")} - ${endHour}:${endMinute.toString().padStart(2, "0")})`}
       </div>
     </div>
   );

@@ -9,27 +9,30 @@ export const restrictToTimeRange: Modifier = ({
     return transform;
   }
 
-  const pixelsPerHour = 100;
+  const pixelsPerMinute = 100 / 60; // 1分あたりのピクセル数
   const taskWidth = draggingNodeRect.width;
+  const taskDurationMinutes = Math.round(taskWidth / pixelsPerMinute);
 
-  // 初期位置を取得（ピクセル単位）
-  const initialX = draggingNodeRect.left - containerNodeRect.left;
+  // 初期位置を取得（分単位）
+  const initialMinutes = Math.round((draggingNodeRect.left - containerNodeRect.left) / pixelsPerMinute);
 
-  // 移動後の位置を計算（ピクセル単位）
-  const targetX = initialX + transform.x;
+  // 移動後の位置を計算（分単位）
+  const deltaMinutes = Math.round(transform.x / pixelsPerMinute);
+  const targetMinutes = initialMinutes + deltaMinutes;
 
-  // 移動可能な範囲を計算（ピクセル単位）
-  const minX = 0;
-  const maxX = (24 * pixelsPerHour) - taskWidth; // タスクの長さを考慮して範囲を制限
+  // 15分単位にスナップ（分単位）
+  const snappedMinutes = Math.round(targetMinutes / 15) * 15;
 
-  // 範囲内に制限（ピクセル単位）
-  const constrainedX = Math.max(minX, Math.min(maxX, targetX));
+  // 移動可能な範囲を計算（分単位）
+  const minMinutes = 0;
+  const maxMinutes = 24 * 60 - taskDurationMinutes;
 
-  // 15分単位にスナップ（25ピクセル単位）
-  const quarterHourPixels = pixelsPerHour / 4; // 25ピクセル
-  const snappedX = Math.round(constrainedX / quarterHourPixels) * quarterHourPixels;
+  // 範囲内に制限（分単位）
+  const constrainedMinutes = Math.max(minMinutes, Math.min(maxMinutes, snappedMinutes));
 
   // 移動量を再計算（ピクセル単位）
+  const initialX = initialMinutes * pixelsPerMinute;
+  const snappedX = constrainedMinutes * pixelsPerMinute;
   const newDeltaX = snappedX - initialX;
 
   return {

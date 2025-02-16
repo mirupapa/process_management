@@ -1,10 +1,5 @@
 import { Cell } from "@silevis/reactgrid";
 
-export interface TimeSlot {
-  hour: number;
-  minute: number;
-}
-
 export interface TimeHeaderCell extends Cell {
   type: "timeHeader";
 }
@@ -12,8 +7,8 @@ export interface TimeHeaderCell extends Cell {
 export interface Task {
   id: number;
   title: string;
-  start: TimeSlot;
-  end: TimeSlot;
+  startMinutes: number; // 0-1440 (24時間 * 60分)
+  endMinutes: number;   // 0-1440 (24時間 * 60分)
 }
 
 export interface TaskState extends Task {
