@@ -24,7 +24,7 @@ interface TaskCell extends Cell {
 }
 
 class TimeHeaderCellTemplate implements CellTemplate<TimeHeaderCell> {
-  getCompatibleCell(uncertainCell: Uncertain<TimeHeaderCell>): Compatible<TimeHeaderCell> {
+  getCompatibleCell(): Compatible<TimeHeaderCell> {
     return {
       type: 'timeHeader',
       text: '',
@@ -65,15 +65,15 @@ class TimeHeaderCellTemplate implements CellTemplate<TimeHeaderCell> {
 }
 
 class TaskCellTemplate implements CellTemplate<TaskCell> {
-  getCompatibleCell(uncertainCell: Uncertain<TaskCell>): Compatible<TaskCell> {
-    if (!uncertainCell.task) {
+  getCompatibleCell({ task }: Uncertain<TaskCell>): Compatible<TaskCell> {
+    if (!task) {
       throw new Error('Task is required');
     }
     return {
       type: 'task',
-      task: uncertainCell.task,
-      text: uncertainCell.task.title,
-      value: uncertainCell.task.id,
+      task,
+      text: task.title,
+      value: task.id,
       nonEditable: true
     };
   }
@@ -82,7 +82,6 @@ class TaskCellTemplate implements CellTemplate<TaskCell> {
     const { task } = cell;
     const startHour = task.start.hour;
     const endHour = task.end.hour;
-    const duration = endHour - startHour;
     const startMinutes = task.start.minute;
     const endMinutes = task.end.minute;
     
