@@ -37,7 +37,7 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
 
       if (resizeEdge === 'left') {
         // 左端をドラッグ時は終了時刻を固定
-        const newStartMinutes = Math.max(0, task.startMinutes + minutesDelta);
+        const newStartMinutes = Math.max(0, task.startMinutes - minutesDelta);
         if (newStartMinutes < task.endMinutes) {
           onResize?.({ ...task, startMinutes: newStartMinutes });
         }
