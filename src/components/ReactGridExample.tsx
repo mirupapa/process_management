@@ -94,8 +94,10 @@ export const ReactGridExample: React.FC = () => {
     setTasks(prev =>
       prev.map(task => {
         if (task.id === taskId) {
+          const taskDuration = task.end.hour - task.start.hour + 
+            (task.end.minute - task.start.minute) / 60;
           const newStartHour = task.start.hour + hoursDelta;
-          const newEndHour = task.end.hour + hoursDelta;
+          const newEndHour = newStartHour + taskDuration;
           
           // 0-24時の範囲チェック
           if (newStartHour < 0 || newEndHour > 24) {
