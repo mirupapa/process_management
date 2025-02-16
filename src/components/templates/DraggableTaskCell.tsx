@@ -38,14 +38,30 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
       if (resizeEdge === 'left') {
         // 左端をドラッグ時は終了時刻を固定
         const newStartMinutes = Math.max(0, task.startMinutes - minutesDelta);
-        if (newStartMinutes < task.endMinutes) {
-          onResize?.({ ...task, startMinutes: newStartMinutes });
+        const minStartMinutes = Math.max(0, task.endMinutes - 1440); // 最大24時間
+        const maxStartMinutes = task.endMinutes - 15; // 最小15分の幅を確保
+        const constrainedStartMinutes = Math.min(Math.max(newStartMinutes, minStartMinutes), maxStartMinutes);
+        
+        if (constrainedStartMinutes < task.endMinutes) {
+          onResize?.({
+            ...task,
+            startMinutes: constrainedStartMinutes,
+            endMinutes: task.endMinutes, // 終了時刻を明示的に固定
+          });
         }
       } else if (resizeEdge === 'right') {
         // 右端をドラッグ時は開始時刻を固定
         const newEndMinutes = Math.min(1440, task.endMinutes + minutesDelta);
-        if (newEndMinutes > task.startMinutes) {
-          onResize?.({ ...task, endMinutes: newEndMinutes });
+        const minEndMinutes = task.startMinutes + 15; // 最小15分の幅を確保
+        const maxEndMinutes = Math.min(1440, task.startMinutes + 1440); // 最大24時間
+        const constrainedEndMinutes = Math.min(Math.max(newEndMinutes, minEndMinutes), maxEndMinutes);
+
+        if (constrainedEndMinutes > task.startMinutes) {
+          onResize?.({
+            ...task,
+            startMinutes: task.startMinutes, // 開始時刻を明示的に固定
+            endMinutes: constrainedEndMinutes,
+          });
         }
       }
     };
@@ -119,7 +135,8 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
             width: "4px",
             height: "100%",
             cursor: "w-resize",
-            backgroundColor: "transparent",
+            backgroundColor: isResizing && resizeEdge === 'left' ? "rgba(255, 255, 255, 0.3)" : "transparent",
+            zIndex: 1
           }}
           onMouseDown={(e) => handleResizeStart('left', e)}
         />
@@ -133,7 +150,8 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
             width: "4px",
             height: "100%",
             cursor: "e-resize",
-            backgroundColor: "transparent",
+            backgroundColor: isResizing && resizeEdge === 'right' ? "rgba(255, 255, 255, 0.3)" : "transparent",
+            zIndex: 1
           }}
           onMouseDown={(e) => handleResizeStart('right', e)}
         />
