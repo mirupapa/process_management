@@ -1,5 +1,5 @@
 import React from 'react';
-import { ReactGrid } from '@silevis/reactgrid';
+import { ReactGrid, CellTemplate, Compatible, Cell, Uncertain } from '@silevis/reactgrid';
 import '@silevis/reactgrid/styles.css';
 
 interface TimeSlot {
@@ -7,18 +7,72 @@ interface TimeSlot {
   minute: number;
 }
 
-type Task = {
+interface Task {
   id: number;
   title: string;
   start: TimeSlot;
   end: TimeSlot;
-};
+}
 
-const TIME_SLOTS = Array.from({ length: 24 * 4 }, (_, i) => {
-  const hour = Math.floor(i / 4);
-  const minute = (i % 4) * 15;
-  return { hour, minute };
-});
+interface TaskCell extends Cell {
+  type: 'task';
+  task: Task;
+}
+
+class TaskCellTemplate implements CellTemplate<TaskCell> {
+  getCompatibleCell(uncertainCell: Uncertain<TaskCell>): Compatible<TaskCell> {
+    if (!uncertainCell.task) {
+      throw new Error('Task is required');
+    }
+    return {
+      type: 'task',
+      task: uncertainCell.task,
+      text: uncertainCell.task.title,
+      value: uncertainCell.task.id,
+      nonEditable: true
+    };
+  }
+
+  render(cell: Compatible<TaskCell>): React.ReactNode {
+    const { task } = cell;
+    const startHour = task.start.hour;
+    const endHour = task.end.hour;
+    const duration = endHour - startHour;
+    const startMinutes = task.start.minute;
+    const endMinutes = task.end.minute;
+    
+    const startPosition = (startHour + startMinutes / 60) * 100;
+    const width = ((endHour + endMinutes / 60) - (startHour + startMinutes / 60)) * 100;
+    
+    return (
+      <div style={{ position: 'relative', height: '100%', width: '2400px' }}>
+        <div
+          style={{
+            position: 'absolute',
+            left: `${startPosition}px`,
+            width: `${width}px`,
+            height: '36px',
+            top: '7px',
+            backgroundColor: '#1677ff',
+            color: 'white',
+            borderRadius: '4px',
+            padding: '0 8px',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+            fontSize: '14px',
+            display: 'flex',
+            alignItems: 'center',
+            zIndex: 1,
+            boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
+          }}
+        >
+          {`${task.title} (${startHour.toString().padStart(2, '0')}:${startMinutes.toString().padStart(2, '0')} - ${endHour.toString().padStart(2, '0')}:${endMinutes.toString().padStart(2, '0')})`}
+        </div>
+      </div>
+    );
+  }
+}
 
 const TEST_DATA: Task[] = [
   { id: 1, title: 'タスク1', start: { hour: 9, minute: 15 }, end: { hour: 12, minute: 30 } },
@@ -40,40 +94,18 @@ export const ReactGridExample: React.FC = () => {
       height: 40,
       cells: [
         { type: 'text', text: '', style: { background: '#fafafa' } },
-        ...TIME_SLOTS.map((slot) => ({
-          type: 'text',
-          text: `${slot.hour.toString().padStart(2, '0')}:${slot.minute.toString().padStart(2, '0')}`,
-          style: { background: '#fafafa', fontWeight: 'bold', textAlign: 'center', padding: '8px' }
-        }))
+        { type: 'text', text: '00:00 - 24:00', style: { background: '#fafafa', fontWeight: 'bold', textAlign: 'center' } }
       ]
     },
-    ...TEST_DATA.map((record, index) => ({
+    ...TEST_DATA.map((task, index) => ({
       rowId: `row-${index}`,
-      height: 40,
+      height: 50,
       cells: [
-        {
-          type: 'text',
-          text: record.title,
-          style: { background: '#fafafa', padding: '8px' }
-        },
-        ...Array(TIME_SLOTS.length).fill({ type: 'text', text: '', style: { padding: '8px' } })
+        { type: 'text', text: task.title, style: { background: '#fafafa', padding: '8px' } },
+        { type: 'task', task, text: '' }
       ]
     }))
-
   ];
-
-  const highlights = TEST_DATA.flatMap((record, index) => {
-    const startCol = (record.start.hour * 4 + Math.floor(record.start.minute / 15)) + 1;
-    const endCol = (record.end.hour * 4 + Math.floor(record.end.minute / 15)) + 1;
-    return Array.from({ length: endCol - startCol + 1 }, (_, i) => ({
-      rowId: `row-${index}`,
-      columnId: startCol + i,
-      backgroundColor: '#e6f4ff',
-      color: '#1677ff',
-      borderLeft: i === 0 ? '2px solid #1677ff' : undefined,
-      borderRight: i === endCol - startCol ? '2px solid #1677ff' : undefined
-    }));
-  });
 
   return (
     <div className="h-[600px]">
@@ -81,9 +113,11 @@ export const ReactGridExample: React.FC = () => {
         rows={rows}
         columns={[
           { columnId: 'title', width: 120 },
-          ...Array(TIME_SLOTS.length).fill({ width: 80 })
+          { columnId: 'timeline', width: 2400 }
         ]}
-        highlights={highlights}
+        customCellTemplates={{
+          task: new TaskCellTemplate()
+        }}
         stickyTopRows={1}
         stickyLeftColumns={1}
       />
