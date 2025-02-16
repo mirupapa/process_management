@@ -1,19 +1,22 @@
-import { AntdExample } from './components/AntdExample';
-import { DndKitExample } from './components/DndKitExample';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Navigation } from "./components/Navigation";
+import { AntdExamplePage } from "./pages/AntdExample";
+import { DndKitExamplePage } from "./pages/DndKitExample";
+import { ReactGridExamplePage } from "./pages/ReactGridExample";
+import { Flex } from "antd";
 
 function App() {
   return (
-    <div className="p-4 space-y-8">
-      <div>
-        <h1 className="text-2xl mb-4">Antd Example</h1>
-        <AntdExample />
-      </div>
-      <div>
-        <h1 className="text-2xl mb-4">DnD Kit Example</h1>
-        <DndKitExample />
-      </div>
-    </div>
+    <Flex className="flex-col overflow-hidden w-dvw h-dvh justify-start items-center">
+      <Navigation />
+      <Routes>
+        <Route path="/antd" element={<AntdExamplePage />} />
+        <Route path="/dnd-kit" element={<DndKitExamplePage />} />
+        <Route path="/reactgrid" element={<ReactGridExamplePage />} />
+        <Route path="/" element={<Navigate to="/antd" replace />} />
+      </Routes>
+    </Flex>
   );
 }
 
-export default App
+export default App;
