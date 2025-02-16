@@ -14,6 +14,7 @@ export const TaskCellTemplate: CellTemplate<TaskCell> = {
       text: task.title,
       value: task.id,
       nonEditable: true,
+      style: { paddingLeft: "0px" },
     };
   },
   isFocusable: () => false,
