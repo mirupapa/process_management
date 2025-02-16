@@ -36,11 +36,13 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
       const minutesDelta = Math.round(deltaX / pixelsPerMinute);
 
       if (resizeEdge === 'left') {
-        const newStartMinutes = Math.max(0, task.startMinutes - minutesDelta);
+        // 左端をドラッグ時は終了時刻を固定
+        const newStartMinutes = Math.max(0, task.startMinutes + minutesDelta);
         if (newStartMinutes < task.endMinutes) {
           onResize?.({ ...task, startMinutes: newStartMinutes });
         }
       } else if (resizeEdge === 'right') {
+        // 右端をドラッグ時は開始時刻を固定
         const newEndMinutes = Math.min(1440, task.endMinutes + minutesDelta);
         if (newEndMinutes > task.startMinutes) {
           onResize?.({ ...task, endMinutes: newEndMinutes });
