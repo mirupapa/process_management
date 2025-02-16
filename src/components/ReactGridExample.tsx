@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   ReactGrid,
   CellTemplate,
@@ -7,6 +7,12 @@ import {
   Uncertain,
 } from "@silevis/reactgrid";
 import "@silevis/reactgrid/styles.css";
+import {
+  DndContext,
+  useDraggable,
+  DragEndEvent,
+  DragStartEvent,
+} from "@dnd-kit/core";
 
 interface TimeSlot {
   hour: number;
@@ -24,12 +30,16 @@ interface Task {
   end: TimeSlot;
 }
 
-interface TaskCell extends Cell {
-  type: "task";
-  task: Task;
+interface TaskState extends Task {
+  isDragging: boolean;
 }
 
-class TimeHeaderCellTemplate implements CellTemplate<TimeHeaderCell> {
+interface TaskCell extends Cell {
+  type: "task";
+  task: TaskState;
+}
+
+const TimeHeaderCellTemplate: CellTemplate<TimeHeaderCell> = {
   getCompatibleCell(): Compatible<TimeHeaderCell> {
     return {
       type: "timeHeader",
@@ -38,7 +48,7 @@ class TimeHeaderCellTemplate implements CellTemplate<TimeHeaderCell> {
       nonEditable: true,
       style: { background: "#fafafa" },
     };
-  }
+  },
 
   render(): React.ReactNode {
     return (
@@ -70,7 +80,77 @@ class TimeHeaderCellTemplate implements CellTemplate<TimeHeaderCell> {
   }
 }
 
-class TaskCellTemplate implements CellTemplate<TaskCell> {
+const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({ cell }) => {
+  const { task } = cell;
+  const { attributes, listeners, setNodeRef, transform } = useDraggable({
+    id: task.id.toString()
+  });
+
+  const startHour = task.start.hour;
+  const endHour = task.end.hour;
+  const startMinutes = task.start.minute;
+  const endMinutes = task.end.minute;
+
+  const startPosition = (startHour + startMinutes / 60) * 100;
+  const width =
+    (endHour + endMinutes / 60 - (startHour + startMinutes / 60)) * 100;
+
+  const style: React.CSSProperties = transform ? {
+    transform: `translate3d(${transform.x}px,0px,0)`,
+    position: "absolute",
+    left: `${startPosition}px`,
+    width: `${width}px`,
+    height: "36px",
+    top: "7px",
+    backgroundColor: "#1677ff",
+    color: "white",
+    borderRadius: "4px",
+    padding: "0 8px",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+    fontSize: "14px",
+    display: "flex",
+    alignItems: "center",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    cursor: "move",
+    zIndex: task.isDragging ? 2 : 1,
+  } : {
+    position: "absolute",
+    left: `${startPosition}px`,
+    width: `${width}px`,
+    height: "36px",
+    top: "7px",
+    backgroundColor: "#1677ff",
+    color: "white",
+    borderRadius: "4px",
+    padding: "0 8px",
+    overflow: "hidden",
+    whiteSpace: "nowrap",
+    textOverflow: "ellipsis",
+    fontSize: "14px",
+    display: "flex",
+    alignItems: "center",
+    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+    cursor: "move",
+    zIndex: task.isDragging ? 2 : 1,
+  };
+
+  return (
+    <div style={{ position: "relative", height: "100%", width: "2400px" }}>
+      <div
+        ref={setNodeRef}
+        {...listeners}
+        {...attributes}
+        style={style}
+      >
+        {`${task.title} (${startHour.toString().padStart(2, "0")}:${startMinutes.toString().padStart(2, "0")} - ${endHour.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")})`}
+      </div>
+    </div>
+  );
+};
+
+const TaskCellTemplate: CellTemplate<TaskCell> = {
   getCompatibleCell({ task }: Uncertain<TaskCell>): Compatible<TaskCell> {
     if (!task) {
       throw new Error("Task is required");
@@ -82,47 +162,11 @@ class TaskCellTemplate implements CellTemplate<TaskCell> {
       value: task.id,
       nonEditable: true,
     };
-  }
-
+  },
   render(cell: Compatible<TaskCell>): React.ReactNode {
-    const { task } = cell;
-    const startHour = task.start.hour;
-    const endHour = task.end.hour;
-    const startMinutes = task.start.minute;
-    const endMinutes = task.end.minute;
-
-    const startPosition = (startHour + startMinutes / 60) * 100;
-    const width =
-      (endHour + endMinutes / 60 - (startHour + startMinutes / 60)) * 100;
-
-    return (
-      <div style={{ position: "relative", height: "100%", width: "2400px" }}>
-        <div
-          style={{
-            position: "absolute",
-            left: `${startPosition}px`,
-            width: `${width}px`,
-            height: "36px",
-            top: "7px",
-            backgroundColor: "#1677ff",
-            color: "white",
-            borderRadius: "4px",
-            padding: "0 8px",
-            overflow: "hidden",
-            whiteSpace: "nowrap",
-            textOverflow: "ellipsis",
-            fontSize: "14px",
-            display: "flex",
-            alignItems: "center",
-            boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-          }}
-        >
-          {`${task.title} (${startHour.toString().padStart(2, "0")}:${startMinutes.toString().padStart(2, "0")} - ${endHour.toString().padStart(2, "0")}:${endMinutes.toString().padStart(2, "0")})`}
-        </div>
-      </div>
-    );
+    return <DraggableTaskCell cell={cell} />;
   }
-}
+};
 
 const TEST_DATA: Task[] = [
   {
@@ -188,6 +232,55 @@ const TEST_DATA: Task[] = [
 ];
 
 export const ReactGridExample: React.FC = () => {
+  const [tasks, setTasks] = useState<TaskState[]>(
+    TEST_DATA.map(task => ({ ...task, isDragging: false }))
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const taskId = Number(event.active.id);
+    setTasks(prev =>
+      prev.map(task => ({
+        ...task,
+        isDragging: task.id === taskId
+      }))
+    );
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const taskId = Number(event.active.id);
+    const delta = event.delta.x;
+    const pixelsPerHour = 100;
+    const hoursDelta = Math.round((delta / pixelsPerHour) * 4) / 4; // 15分単位
+
+    setTasks(prev =>
+      prev.map(task => {
+        if (task.id === taskId) {
+          const newStartHour = task.start.hour + hoursDelta;
+          const newEndHour = task.end.hour + hoursDelta;
+          
+          // 0-24時の範囲チェック
+          if (newStartHour < 0 || newEndHour > 24) {
+            return { ...task, isDragging: false };
+          }
+
+          return {
+            ...task,
+            isDragging: false,
+            start: {
+              ...task.start,
+              hour: newStartHour
+            },
+            end: {
+              ...task.end,
+              hour: newEndHour
+            }
+          };
+        }
+        return task;
+      })
+    );
+  };
+
   const rows = [
     {
       rowId: "header",
@@ -197,7 +290,7 @@ export const ReactGridExample: React.FC = () => {
         { type: "timeHeader" },
       ],
     },
-    ...TEST_DATA.map((task, index) => ({
+    ...tasks.map((task, index) => ({
       rowId: `row-${index}`,
       height: 50,
       cells: [
@@ -212,20 +305,25 @@ export const ReactGridExample: React.FC = () => {
   ];
 
   return (
-    <div className="m-4 h-full overflow-auto">
-      <ReactGrid
-        rows={rows}
-        columns={[
-          { columnId: "title", width: 120 },
-          { columnId: "timeline", width: 2400 },
-        ]}
-        customCellTemplates={{
-          task: new TaskCellTemplate(),
-          timeHeader: new TimeHeaderCellTemplate(),
-        }}
-        stickyTopRows={1}
-        stickyLeftColumns={1}
-      />
-    </div>
+    <DndContext
+      onDragStart={handleDragStart}
+      onDragEnd={handleDragEnd}
+    >
+      <div className="m-4 h-full overflow-auto">
+        <ReactGrid
+          rows={rows}
+          columns={[
+            { columnId: "title", width: 120 },
+            { columnId: "timeline", width: 2400 },
+          ]}
+          customCellTemplates={{
+            task: TaskCellTemplate,
+            timeHeader: TimeHeaderCellTemplate,
+          }}
+          stickyTopRows={1}
+          stickyLeftColumns={1}
+        />
+      </div>
+    </DndContext>
   );
 };
