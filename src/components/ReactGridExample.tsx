@@ -7,6 +7,10 @@ interface TimeSlot {
   minute: number;
 }
 
+interface TimeHeaderCell extends Cell {
+  type: 'timeHeader';
+}
+
 interface Task {
   id: number;
   title: string;
@@ -17,6 +21,47 @@ interface Task {
 interface TaskCell extends Cell {
   type: 'task';
   task: Task;
+}
+
+class TimeHeaderCellTemplate implements CellTemplate<TimeHeaderCell> {
+  getCompatibleCell(uncertainCell: Uncertain<TimeHeaderCell>): Compatible<TimeHeaderCell> {
+    return {
+      type: 'timeHeader',
+      text: '',
+      value: 0,
+      nonEditable: true,
+      style: { background: '#fafafa' }
+    };
+  }
+
+  render(): React.ReactNode {
+    return (
+      <div style={{ position: 'relative', height: '100%', width: '2400px' }}>
+        {Array.from({ length: 24 }, (_, i) => (
+          <div
+            key={i}
+            style={{
+              position: 'absolute',
+              left: `${i * 100}px`,
+              width: '100px',
+              height: '100%',
+              borderRight: '1px solid #e8e8e8',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backgroundColor: i % 2 === 0 ? '#fafafa' : '#f5f5f5',
+              fontWeight: 'bold',
+              fontSize: '13px',
+              color: '#595959',
+              boxShadow: i === 0 ? '1px 0 0 0 #e8e8e8' : 'none'
+            }}
+          >
+            {`${i.toString().padStart(2, '0')}:00`}
+          </div>
+        ))}
+      </div>
+    );
+  }
 }
 
 class TaskCellTemplate implements CellTemplate<TaskCell> {
@@ -94,7 +139,7 @@ export const ReactGridExample: React.FC = () => {
       height: 40,
       cells: [
         { type: 'text', text: '', style: { background: '#fafafa' } },
-        { type: 'text', text: '00:00 - 24:00', style: { background: '#fafafa', fontWeight: 'bold', textAlign: 'center' } }
+        { type: 'timeHeader' }
       ]
     },
     ...TEST_DATA.map((task, index) => ({
@@ -116,7 +161,8 @@ export const ReactGridExample: React.FC = () => {
           { columnId: 'timeline', width: 2400 }
         ]}
         customCellTemplates={{
-          task: new TaskCellTemplate()
+          task: new TaskCellTemplate(),
+          timeHeader: new TimeHeaderCellTemplate()
         }}
         stickyTopRows={1}
         stickyLeftColumns={1}
