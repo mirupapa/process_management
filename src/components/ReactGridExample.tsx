@@ -5,6 +5,7 @@ import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { TimeHeaderCellTemplate } from "./templates/TimeHeaderCellTemplate.js";
 import { TaskCellTemplate } from "./templates/TaskCellTemplate.js";
 import { Task, TaskState } from "./types.js";
+import { restrictToTimeRange } from "./modifiers/restrictToTimeRange.js";
 
 const TEST_DATA: Task[] = [
   {
@@ -152,6 +153,7 @@ export const ReactGridExample: React.FC = () => {
     <DndContext
       onDragStart={handleDragStart}
       onDragEnd={handleDragEnd}
+      modifiers={[restrictToTimeRange]}
     >
       <div className="m-4 h-full overflow-auto">
         <ReactGrid
