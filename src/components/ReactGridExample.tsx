@@ -133,7 +133,15 @@ export const ReactGridExample: React.FC = () => {
           text: task.title,
           style: { background: "#fafafa", padding: "8px" },
         },
-        { type: "task", task, text: "" },
+        {
+          type: "task",
+          task,
+          text: "",
+          style: {
+            position: "relative",
+            overflow: "visible",
+          },
+        },
       ],
     })),
   ];

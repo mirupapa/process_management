@@ -2,6 +2,7 @@ import React from "react";
 import { Compatible } from "@silevis/reactgrid";
 import { useDraggable } from "@dnd-kit/core";
 import { TaskCell } from "../types.js";
+import { TimelineBackground } from "./TimelineBackground.js";
 
 export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
   cell,
@@ -61,8 +62,9 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
       };
 
   return (
-    <div style={{ position: "relative", height: "100%", width: "2400px" }}>
-      <div ref={setNodeRef} {...listeners} {...attributes} style={style}>
+    <div style={{ position: "relative", height: "100%", width: "2400px", overflow: "hidden" }}>
+      <TimelineBackground />
+      <div ref={setNodeRef} {...listeners} {...attributes} style={{ ...style, zIndex: 1 }}>
         {`${task.title} (${startHour}:${startMinute.toString().padStart(2, "0")} - ${endHour}:${endMinute.toString().padStart(2, "0")})`}
       </div>
     </div>
