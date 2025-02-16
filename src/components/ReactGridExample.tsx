@@ -1,5 +1,6 @@
 import React from 'react';
 import { ReactGrid } from '@silevis/reactgrid';
+import '@silevis/reactgrid/styles.css';
 
 interface TimeSlot {
   hour: number;
