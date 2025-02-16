@@ -9,7 +9,7 @@ export const TimeHeaderCellTemplate: CellTemplate<TimeHeaderCell> = {
       text: "",
       value: 0,
       nonEditable: true,
-      style: { background: "#fafafa" },
+      style: { background: "white" },
     };
   },
 
