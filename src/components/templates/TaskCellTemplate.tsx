@@ -16,7 +16,8 @@ export const TaskCellTemplate: CellTemplate<TaskCell> = {
       nonEditable: true,
     };
   },
+  isFocusable: () => false,
   render(cell: Compatible<TaskCell>): React.ReactNode {
     return <DraggableTaskCell cell={cell} />;
-  }
+  },
 };
