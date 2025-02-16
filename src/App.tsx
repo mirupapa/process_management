@@ -1,13 +1,13 @@
-import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
-import { Navigation } from './components/Navigation';
-import { AntdExamplePage } from './pages/AntdExample';
-import { DndKitExamplePage } from './pages/DndKitExample';
-import { ReactGridExamplePage } from './pages/ReactGridExample';
+import { Routes, Route, Navigate } from "react-router-dom";
+import { Navigation } from "./components/Navigation";
+import { AntdExamplePage } from "./pages/AntdExample";
+import { DndKitExamplePage } from "./pages/DndKitExample";
+import { ReactGridExamplePage } from "./pages/ReactGridExample";
+import { Flex } from "antd";
 
 function App() {
   return (
-    <div>
+    <Flex className="flex-col overflow-hidden w-dvw h-dvh justify-start items-center">
       <Navigation />
       <Routes>
         <Route path="/antd" element={<AntdExamplePage />} />
@@ -15,8 +15,8 @@ function App() {
         <Route path="/reactgrid" element={<ReactGridExamplePage />} />
         <Route path="/" element={<Navigate to="/antd" replace />} />
       </Routes>
-    </div>
+    </Flex>
   );
 }
 
-export default App
+export default App;

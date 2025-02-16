@@ -212,7 +212,7 @@ export const ReactGridExample: React.FC = () => {
   ];
 
   return (
-    <div className="h-[600px]">
+    <div className="m-4 h-full overflow-auto">
       <ReactGrid
         rows={rows}
         columns={[
