@@ -29,7 +29,7 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
 
     const deltaX = transform.x;
     const pixelsPerMinute = 100 / 60;
-    const minutesDelta = Math.round(deltaX / pixelsPerMinute);
+    const minutesDelta = Math.round(deltaX / pixelsPerMinute / 15) * 15; // 15分単位でスナップ
     
     const newStartMinutes = Math.max(0, task.startMinutes + minutesDelta);
     const newEndMinutes = Math.min(1440, task.endMinutes + minutesDelta);
@@ -75,34 +75,30 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - initialX;
       const pixelsPerMinute = 100 / 60;
-      const minutesDelta = Math.round(deltaX / pixelsPerMinute);
+      const minutesDelta = Math.round(deltaX / pixelsPerMinute / 15) * 15; // 15分単位でスナップ
 
       if (resizeEdge === 'left') {
-        const newStartMinutes = Math.max(0, task.startMinutes - minutesDelta);
+        const newStartMinutes = Math.max(0, task.startMinutes + minutesDelta);
         const minStartMinutes = Math.max(0, task.endMinutes - 1440); // 最大24時間
         const maxStartMinutes = task.endMinutes - 15; // 最小15分の幅を確保
         const constrainedStartMinutes = Math.min(Math.max(newStartMinutes, minStartMinutes), maxStartMinutes);
         
-        if (constrainedStartMinutes < task.endMinutes) {
-          setLocalTask(prev => ({
-            ...prev,
-            startMinutes: constrainedStartMinutes,
-            endMinutes: task.endMinutes, // 終了時刻を明示的に固定
-          }));
-        }
+        setLocalTask(prev => ({
+          ...prev,
+          startMinutes: constrainedStartMinutes,
+          endMinutes: task.endMinutes, // 終了時刻を明示的に固定
+        }));
       } else if (resizeEdge === 'right') {
         const newEndMinutes = Math.min(1440, task.endMinutes + minutesDelta);
         const minEndMinutes = task.startMinutes + 15; // 最小15分の幅を確保
         const maxEndMinutes = Math.min(1440, task.startMinutes + 1440); // 最大24時間
         const constrainedEndMinutes = Math.min(Math.max(newEndMinutes, minEndMinutes), maxEndMinutes);
 
-        if (constrainedEndMinutes > task.startMinutes) {
-          setLocalTask(prev => ({
-            ...prev,
-            startMinutes: task.startMinutes, // 開始時刻を明示的に固定
-            endMinutes: constrainedEndMinutes,
-          }));
-        }
+        setLocalTask(prev => ({
+          ...prev,
+          startMinutes: task.startMinutes, // 開始時刻を明示的に固定
+          endMinutes: constrainedEndMinutes,
+        }));
       }
     };
 
