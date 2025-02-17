@@ -4,6 +4,11 @@ import { useDraggable } from "@dnd-kit/core";
 import { TaskCell } from "../types.js";
 import { TimelineBackground } from "./TimelineBackground.js";
 
+const calculateSnappedMinutes = (deltaPixels: number): number => {
+  const pixelsPerMinute = 100 / 60;
+  return Math.round(deltaPixels / pixelsPerMinute / 15) * 15;
+};
+
 export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
   cell,
 }) => {
@@ -27,12 +32,9 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
   useEffect(() => {
     if (!transform || !isDragging) return;
 
-    const deltaX = transform.x;
-    const pixelsPerMinute = 100 / 60;
-    const minutesDelta = Math.round(deltaX / pixelsPerMinute / 15) * 15; // 15分単位でスナップ
-    
-    const newStartMinutes = Math.max(0, task.startMinutes + minutesDelta);
-    const newEndMinutes = Math.min(1440, task.endMinutes + minutesDelta);
+    const snappedMinutesDelta = calculateSnappedMinutes(transform.x);
+    const newStartMinutes = Math.max(0, task.startMinutes + snappedMinutesDelta);
+    const newEndMinutes = Math.min(1440, task.endMinutes + snappedMinutesDelta);
     
     setLocalTask(prev => ({
       ...prev,
@@ -74,11 +76,10 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
 
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - initialX;
-      const pixelsPerMinute = 100 / 60;
-      const minutesDelta = Math.round(deltaX / pixelsPerMinute / 15) * 15; // 15分単位でスナップ
+      const snappedMinutesDelta = calculateSnappedMinutes(deltaX);
 
       if (resizeEdge === 'left') {
-        const newStartMinutes = Math.max(0, task.startMinutes + minutesDelta);
+        const newStartMinutes = Math.max(0, task.startMinutes + snappedMinutesDelta);
         const minStartMinutes = Math.max(0, task.endMinutes - 1440); // 最大24時間
         const maxStartMinutes = task.endMinutes - 15; // 最小15分の幅を確保
         const constrainedStartMinutes = Math.min(Math.max(newStartMinutes, minStartMinutes), maxStartMinutes);
@@ -89,7 +90,7 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
           endMinutes: task.endMinutes, // 終了時刻を明示的に固定
         }));
       } else if (resizeEdge === 'right') {
-        const newEndMinutes = Math.min(1440, task.endMinutes + minutesDelta);
+        const newEndMinutes = Math.min(1440, task.endMinutes + snappedMinutesDelta);
         const minEndMinutes = task.startMinutes + 15; // 最小15分の幅を確保
         const maxEndMinutes = Math.min(1440, task.startMinutes + 1440); // 最大24時間
         const constrainedEndMinutes = Math.min(Math.max(newEndMinutes, minEndMinutes), maxEndMinutes);
@@ -126,6 +127,7 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
   const startPosition = (localTask.startMinutes / 60) * 100;
   const width = ((localTask.endMinutes - localTask.startMinutes) / 60) * 100;
 
+  const pixelsPerMinute = 100 / 60;
   const baseStyle: React.CSSProperties = {
     position: "absolute",
     left: `${startPosition}px`,
@@ -149,7 +151,7 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
   const style: React.CSSProperties = transform
     ? {
         ...baseStyle,
-        transform: `translate3d(${transform.x}px,0px,0)`,
+        transform: `translate3d(${Math.round(transform.x / pixelsPerMinute / 15) * pixelsPerMinute * 15}px,0px,0)`,
       }
     : baseStyle;
 
