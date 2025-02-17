@@ -7,28 +7,70 @@ import { TimelineBackground } from "./TimelineBackground.js";
 export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
   cell,
 }) => {
-  const { task, onResize } = cell;
+  const { task, updateCall } = cell;
+  const [localTask, setLocalTask] = useState(task);
+  const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeEdge, setResizeEdge] = useState<'left' | 'right' | null>(null);
+  const [initialX, setInitialX] = useState(0);
   const { attributes, listeners, setNodeRef, transform } = useDraggable({
     id: task.id.toString(),
   });
 
-  const [isResizing, setIsResizing] = useState(false);
-  const [resizeEdge, setResizeEdge] = useState<'left' | 'right' | null>(null);
-  const [initialX, setInitialX] = useState(0);
-  const [initialWidth, setInitialWidth] = useState(0);
+  // Set isDragging when drag starts
+  useEffect(() => {
+    if (transform && !isDragging) {
+      setIsDragging(true);
+    }
+  }, [transform, isDragging]);
+
+  useEffect(() => {
+    if (!transform || !isDragging) return;
+
+    const deltaX = transform.x;
+    const pixelsPerMinute = 100 / 60;
+    const minutesDelta = Math.round(deltaX / pixelsPerMinute);
+    
+    const newStartMinutes = Math.max(0, task.startMinutes + minutesDelta);
+    const newEndMinutes = Math.min(1440, task.endMinutes + minutesDelta);
+    
+    setLocalTask(prev => ({
+      ...prev,
+      startMinutes: newStartMinutes,
+      endMinutes: newEndMinutes,
+    }));
+  }, [transform, isDragging, task]);
+
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleDragEnd = () => {
+      setIsDragging(false);
+      if (localTask !== task) {
+        updateCall?.(localTask);
+      }
+    };
+
+    document.addEventListener('mouseup', handleDragEnd);
+    return () => document.removeEventListener('mouseup', handleDragEnd);
+  }, [isDragging, localTask, task, updateCall]);
 
   const handleResizeStart = (edge: 'left' | 'right', e: React.MouseEvent) => {
     if (!isResizing) {
       setIsResizing(true);
       setResizeEdge(edge);
       setInitialX(e.clientX);
-      setInitialWidth(width);
       e.stopPropagation();
     }
   };
 
   useEffect(() => {
-    if (!isResizing) return;
+    if (!isResizing) {
+      if (localTask !== task) {
+        updateCall?.(localTask);
+      }
+      return;
+    }
 
     const handleMouseMove = (e: MouseEvent) => {
       const deltaX = e.clientX - initialX;
@@ -36,32 +78,30 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
       const minutesDelta = Math.round(deltaX / pixelsPerMinute);
 
       if (resizeEdge === 'left') {
-        // 左端をドラッグ時は終了時刻を固定
         const newStartMinutes = Math.max(0, task.startMinutes - minutesDelta);
         const minStartMinutes = Math.max(0, task.endMinutes - 1440); // 最大24時間
         const maxStartMinutes = task.endMinutes - 15; // 最小15分の幅を確保
         const constrainedStartMinutes = Math.min(Math.max(newStartMinutes, minStartMinutes), maxStartMinutes);
         
         if (constrainedStartMinutes < task.endMinutes) {
-          onResize?.({
-            ...task,
+          setLocalTask(prev => ({
+            ...prev,
             startMinutes: constrainedStartMinutes,
             endMinutes: task.endMinutes, // 終了時刻を明示的に固定
-          });
+          }));
         }
       } else if (resizeEdge === 'right') {
-        // 右端をドラッグ時は開始時刻を固定
         const newEndMinutes = Math.min(1440, task.endMinutes + minutesDelta);
         const minEndMinutes = task.startMinutes + 15; // 最小15分の幅を確保
         const maxEndMinutes = Math.min(1440, task.startMinutes + 1440); // 最大24時間
         const constrainedEndMinutes = Math.min(Math.max(newEndMinutes, minEndMinutes), maxEndMinutes);
 
         if (constrainedEndMinutes > task.startMinutes) {
-          onResize?.({
-            ...task,
+          setLocalTask(prev => ({
+            ...prev,
             startMinutes: task.startMinutes, // 開始時刻を明示的に固定
             endMinutes: constrainedEndMinutes,
-          });
+          }));
         }
       }
     };
@@ -69,24 +109,26 @@ export const DraggableTaskCell: React.FC<{ cell: Compatible<TaskCell> }> = ({
     const handleMouseUp = () => {
       setIsResizing(false);
       setResizeEdge(null);
+      if (localTask !== task) {
+        updateCall?.(localTask);
+      }
     };
 
     document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('mouseup', handleMouseUp);
-
     return () => {
       document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('mouseup', handleMouseUp);
     };
-  }, [isResizing, resizeEdge, initialX, initialWidth, task, onResize]);
+  }, [isResizing, resizeEdge, initialX, task, localTask, updateCall]);
 
-  const startHour = Math.floor(task.startMinutes / 60);
-  const startMinute = task.startMinutes % 60;
-  const endHour = Math.floor(task.endMinutes / 60);
-  const endMinute = task.endMinutes % 60;
+  const startHour = Math.floor(localTask.startMinutes / 60);
+  const startMinute = localTask.startMinutes % 60;
+  const endHour = Math.floor(localTask.endMinutes / 60);
+  const endMinute = localTask.endMinutes % 60;
 
-  const startPosition = (task.startMinutes / 60) * 100;
-  const width = ((task.endMinutes - task.startMinutes) / 60) * 100;
+  const startPosition = (localTask.startMinutes / 60) * 100;
+  const width = ((localTask.endMinutes - localTask.startMinutes) / 60) * 100;
 
   const baseStyle: React.CSSProperties = {
     position: "absolute",
