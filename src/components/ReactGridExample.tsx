@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import { DefaultCellTypes, ReactGrid, Row } from "@silevis/reactgrid";
 import "@silevis/reactgrid/styles.css";
-import { DndContext, DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { TimeHeaderCellTemplate } from "./templates/TimeHeaderCellTemplate.js";
 import { TaskCellTemplate } from "./templates/TaskCellTemplate.js";
 import { Task, TaskCell, TaskState, TimeHeaderCell } from "./types.js";
-import { restrictToTimeRange } from "./modifiers/restrictToTimeRange.js";
 
 const TEST_DATA: Task[] = [
   {
@@ -75,46 +73,6 @@ export const ReactGridExample: React.FC = () => {
     TEST_DATA.map((task) => ({ ...task, isDragging: false }))
   );
 
-  const handleDragStart = (event: DragStartEvent) => {
-    const taskId = Number(event.active.id);
-    setTasks((prev) =>
-      prev.map((task) => ({
-        ...task,
-        isDragging: task.id === taskId,
-      }))
-    );
-  };
-
-  const handleDragEnd = (event: DragEndEvent) => {
-    const taskId = Number(event.active.id);
-    const delta = event.delta.x;
-    const pixelsPerMinute = 100 / 60;
-    const deltaMinutes = Math.round(delta / pixelsPerMinute / 15) * 15; // 15分単位
-
-    setTasks((prev) =>
-      prev.map((task) => {
-        if (task.id === taskId) {
-          const taskDuration = task.endMinutes - task.startMinutes;
-          const newStartMinutes = task.startMinutes + deltaMinutes;
-          const newEndMinutes = newStartMinutes + taskDuration;
-
-          // 0-24時の範囲チェック（分単位）
-          if (newStartMinutes < 0 || newEndMinutes > 24 * 60) {
-            return { ...task, isDragging: false };
-          }
-
-          return {
-            ...task,
-            isDragging: false,
-            startMinutes: newStartMinutes,
-            endMinutes: newEndMinutes,
-          };
-        }
-        return task;
-      })
-    );
-  };
-
   const rows: Row<DefaultCellTypes | TimeHeaderCell | TaskCell>[] = [
     {
       rowId: "header",
@@ -150,26 +108,20 @@ export const ReactGridExample: React.FC = () => {
   ];
 
   return (
-    <DndContext
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-      modifiers={[restrictToTimeRange]}
-    >
-      <div className="m-4 h-full overflow-auto">
-        <ReactGrid
-          rows={rows}
-          columns={[
-            { columnId: "title", width: 120 },
-            { columnId: "timeline", width: 2400 },
-          ]}
-          customCellTemplates={{
-            task: TaskCellTemplate,
-            timeHeader: TimeHeaderCellTemplate,
-          }}
-          stickyTopRows={1}
-          stickyLeftColumns={1}
-        />
-      </div>
-    </DndContext>
+    <div className="m-4 h-full overflow-auto">
+      <ReactGrid
+        rows={rows}
+        columns={[
+          { columnId: "title", width: 120 },
+          { columnId: "timeline", width: 2400 },
+        ]}
+        customCellTemplates={{
+          task: TaskCellTemplate({ setTasks }),
+          timeHeader: TimeHeaderCellTemplate,
+        }}
+        stickyTopRows={1}
+        stickyLeftColumns={1}
+      />
+    </div>
   );
 };
