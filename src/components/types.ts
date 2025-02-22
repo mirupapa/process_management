@@ -18,5 +18,5 @@ export interface TaskState extends Task {
 export interface TaskCell extends Cell {
   type: "task";
   task: TaskState;
-  onResize?: (updatedTask: TaskState) => void;
+  updateCall?: (updatedTask: TaskState) => void;
 }

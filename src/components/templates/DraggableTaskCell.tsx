@@ -10,12 +10,9 @@ export const DraggableTaskCell: React.FC<{
 }> = ({ cell, setTasks }) => {
   const { task } = cell;
 
-  const startPosition = (task.startMinutes / 60) * 100;
-  const width = ((task.endMinutes - task.startMinutes) / 60) * 100;
-
   const [dragPosition, setDragPosition] = useState({
-    x: startPosition,
-    width: width,
+    x: (task.startMinutes * 100) / 60,
+    width: ((task.endMinutes - task.startMinutes) * 100) / 60,
   });
 
   // スタイル定義
