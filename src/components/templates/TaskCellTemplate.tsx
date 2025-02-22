@@ -1,10 +1,16 @@
 import React from "react";
-import { CellTemplate, Compatible, Uncertain } from "@silevis/reactgrid";
-import { TaskCell } from "../types.js";
+import { Compatible, Uncertain } from "@silevis/reactgrid";
+import { TaskCell, TaskState } from "../types.js";
 import { DraggableTaskCell } from "./DraggableTaskCell.js";
 
-export const TaskCellTemplate: CellTemplate<TaskCell> = {
-  getCompatibleCell({ task }: Uncertain<TaskCell>): Compatible<TaskCell> {
+export const TaskCellTemplate = ({
+  setTasks,
+}: {
+  setTasks: React.Dispatch<React.SetStateAction<TaskState[]>>;
+}) => {
+  const getCompatibleCell = ({
+    task,
+  }: Uncertain<TaskCell>): Compatible<TaskCell> => {
     if (!task) {
       throw new Error("Task is required");
     }
@@ -16,9 +22,15 @@ export const TaskCellTemplate: CellTemplate<TaskCell> = {
       nonEditable: true,
       style: { paddingLeft: "0px" },
     };
-  },
-  isFocusable: () => false,
-  render(cell: Compatible<TaskCell>): React.ReactNode {
-    return <DraggableTaskCell cell={cell} />;
-  },
+  };
+  const isFocusable = () => false;
+  const render = (cell: Compatible<TaskCell>): React.ReactNode => {
+    return <DraggableTaskCell cell={cell} setTasks={setTasks} />;
+  };
+
+  return {
+    getCompatibleCell,
+    isFocusable,
+    render,
+  };
 };
